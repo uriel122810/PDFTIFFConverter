@@ -1,0 +1,13 @@
+﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+	<Costura>
+		<IncludeAssemblies>
+			PdfiumViewer
+		</IncludeAssemblies>
+		<Unmanaged32Assemblies>
+			PdfiumViewer.Native.x86.v8-xfa
+		</Unmanaged32Assemblies>
+		<Unmanaged64Assemblies>
+			PdfiumViewer.Native.x86_64.v8-xfa
+		</Unmanaged64Assemblies>
+	</Costura>
+</Weavers>

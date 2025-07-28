@@ -423,8 +423,12 @@ namespace PDFTIFFConverter
                         // Render at 300 DPI
                         using (var image = document.Render(i, 300, 300, false))
                         {
-                            // Convert to grayscale
+                            // Convert to grayscale and set DPI
                             var grayImage = ConvertToGrayscale(image);
+
+                            // Establecer explícitamente los DPI
+                            grayImage.SetResolution(300f, 300f);
+
                             images.Add(grayImage);
                         }
                     }
@@ -442,6 +446,9 @@ namespace PDFTIFFConverter
         private Bitmap ConvertToGrayscale(Image original)
         {
             Bitmap grayscale = new Bitmap(original.Width, original.Height);
+
+            // Establecer la resolución antes de dibujar
+            grayscale.SetResolution(300f, 300f);
 
             using (Graphics g = Graphics.FromImage(grayscale))
             {
@@ -469,23 +476,35 @@ namespace PDFTIFFConverter
         {
             if (images.Count == 0) return;
 
-            // Save first image with encoder parameters
-            EncoderParameters encoderParams = new EncoderParameters(2);
+            // Asegurar que todas las imágenes tienen 300 DPI
+            foreach (Image img in images)
+            {
+                if (img.HorizontalResolution != 300f || img.VerticalResolution != 300f)
+                {
+                    ((Bitmap)img).SetResolution(300f, 300f);
+                }
+            }
+
+            // Configurar parámetros del encoder con compresión LZW
+            EncoderParameters encoderParams = new EncoderParameters(3);
             encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.MultiFrame);
             encoderParams.Param[1] = new EncoderParameter(Encoder.Compression, (long)EncoderValue.CompressionLZW);
+            // Establecer explícitamente la resolución en el encoder
+            encoderParams.Param[2] = new EncoderParameter(Encoder.Quality, 100L);
 
             ImageCodecInfo tiffCodec = GetEncoderInfo("image/tiff");
 
+            // Guardar la primera imagen
             images[0].Save(outputPath, tiffCodec, encoderParams);
 
-            // Add subsequent images
+            // Agregar las páginas subsecuentes
             for (int i = 1; i < images.Count; i++)
             {
                 encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.FrameDimensionPage);
                 images[0].SaveAdd(images[i], encoderParams);
             }
 
-            // Close the multipage tiff
+            // Cerrar el archivo TIFF multipágina
             encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.Flush);
             images[0].SaveAdd(encoderParams);
         }
@@ -496,5 +515,4 @@ namespace PDFTIFFConverter
             return codecs.FirstOrDefault(codec => codec.MimeType == mimeType);
         }
     }
-
 }
